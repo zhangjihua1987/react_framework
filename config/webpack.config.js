@@ -34,11 +34,16 @@ const shouldInlineRuntimeChunk = process.env.INLINE_RUNTIME_CHUNK !== 'false';
 // Check if TypeScript is setup
 const useTypeScript = fs.existsSync(paths.appTsConfig);
 
+const lessToJs = require('less-vars-to-js');
+const themeVariables = lessToJs(fs.readFileSync(path.join(__dirname, '../config/antdTheme.less'), 'utf8'));
+
 // style files regexes
 const cssRegex = /\.css$/;
 const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
+const lessRegex = /\.less$/;
+const lessModuleRegex = /\.module\.less$/;
 
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
@@ -346,6 +351,11 @@ module.exports = function(webpackEnv) {
                       },
                     },
                   ],
+                    ['import', {
+                        libraryName: "antd",
+                        libraryDirectory: "es",
+                        style: true
+                    }],
                 ],
                 // This is a feature of `babel-loader` for webpack (not Babel itself).
                 // It enables caching results in ./node_modules/.cache/babel-loader/
@@ -412,6 +422,27 @@ module.exports = function(webpackEnv) {
                 getLocalIdent: getCSSModuleLocalIdent,
               }),
             },
+              {
+                  test: lessRegex,
+                  exclude: lessModuleRegex,
+                  // use: getStyleLoaders({
+                  //     importLoaders: 2
+                  // }, 'less-loader', {
+                  //     javascriptEnabled: true,
+                  //     modifyVars: themeVariables
+                  // }),
+                  use: [{
+                      loader: 'style-loader'
+                  },{
+                      loader: 'css-loader'
+                  },{
+                      loader: 'less-loader',
+                      options: {
+                          modifyVars: themeVariables,
+                          javascriptEnabled: true,
+                      }
+                  }]
+              },
             // Opt-in support for SASS (using .scss or .sass extensions).
             // By default we support SASS Modules with the
             // extensions .module.scss or .module.sass
